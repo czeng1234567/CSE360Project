@@ -237,7 +237,7 @@ package cse360Phase3;
 	        Label warning = new Label("");
 	        Label pid3 = new Label("Patient ID: ");
 	        TextField pidField2 = new TextField();
-	        Button btnLogin = new Button("Hello");
+	        Button btnLogin = new Button("Hello world");
 	        Button backRP = new Button("Back");
 	        
 	        HBox hboxLogin = new HBox();
