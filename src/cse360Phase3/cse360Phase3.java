@@ -1,8 +1,5 @@
 package cse360Phase3;
 
-//public class cse360Phase3 
-//{
-	//package application;
 
 
 	import javafx.application.Application;
