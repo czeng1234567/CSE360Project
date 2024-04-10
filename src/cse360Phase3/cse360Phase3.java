@@ -626,19 +626,7 @@ import javafx.scene.layout.*;
 	        primaryStage.show();
 	    }
 	    
-	    void createConnection(int uniqueID, String firstName, String lastName, String email, String phoneNumber, String address, String birthday) throws SQLException {
-	    	try {
-	    		Class.forName("com.mysql.cj.jdbc.Driver");
-	    		Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/mydb", "root", "blueangels");	
-	    		Statement stmt = con.createStatement();
-	    		//ResultSet rs = stmt.executeQuery("INSERT INTO Patients(idpatients, firstName, lastName, email, phoneNumber, address, birthday) VALUES (?, ?, ?, ?, ?, ?, ?)");
-	    		stmt.executeQuery("INSERT INTO Patients(idpatients, firstName, lastName, email, phoneNumber, address, birthday) VALUES (?, ?, ?, ?, ?, ?, ?)");
-	    		System.out.println("Database connection sucess");
-	    	} catch(ClassNotFoundException ex){
-	    		Logger.getLogger(cse360Phase3.class.getName()).log(Level.SEVERE, null, ex);
-	    	}
-	    }
 	    
 	   
-	}
+}
 
