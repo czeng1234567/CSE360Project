@@ -1,2 +1,1 @@
-DEMO
-hello world
+# CSE 360 Project Phase 3
