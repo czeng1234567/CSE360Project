@@ -237,10 +237,12 @@ package cse360Phase3;
 	        Label warning = new Label("");
 	        Label pid3 = new Label("Patient ID: ");
 	        TextField pidField2 = new TextField();
-	        Button btnLogin = new Button("Login");
+	        Button btnLogin = new Button("");
+	        Button backRP = new Button("Back");
 	        
 	        HBox hboxLogin = new HBox();
-	        hboxLogin.getChildren().addAll(pid3, pidField2, btnLogin, warning);
+	        hboxLogin.getChildren().addAll(pid3, pidField2, btnLogin, warning, backRP);
+	        
 	        
 	        //Getting and reading from file comes here. When clicking the login button
 	        btnLogin.setOnAction(new EventHandler<>() {
@@ -354,6 +356,8 @@ package cse360Phase3;
 	            }
 	        });
 	        
+	        //set on actions being declared after proper scene declarations
+	        
 	        btnRP.setOnAction(new EventHandler<>() {
 	            public void handle(ActionEvent event) 
 	            {
@@ -370,6 +374,14 @@ package cse360Phase3;
 	        });
 	        
 	        backN.setOnAction(new EventHandler<>() {
+	            public void handle(ActionEvent event) 
+	            {
+	                primaryStage.setScene(homeScene);
+	            }
+	        });
+	        
+	        backRP.setOnAction(new EventHandler<>() 
+	        {
 	            public void handle(ActionEvent event) 
 	            {
 	                primaryStage.setScene(homeScene);
