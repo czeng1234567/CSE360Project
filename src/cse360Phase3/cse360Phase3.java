@@ -42,11 +42,7 @@ package cse360Phase3;
 	        //Creates Layout
 	        Label homeTitle = new Label("Welcome to Sunshine Pediatric Center");
 	        homeTitle.setStyle("-fx-font-size: 24px; -fx-alignment: center;");
-	        //StackPane stackPane = new StackPane(homeTitle);
-	        //stackPane.setAlignment(Pos.CENTER);
-	        //StackPane stackPane = new StackPane(homeTitle);
-	        //stackPane.setAlignment(Pos.CENTER);
-	        //stackPane.setPrefSize(800, 300);
+	   
 	        Label empty1 = new Label("");
 	        Label empty2 = new Label("");
 	        Label empty3 = new Label("");
@@ -65,16 +61,12 @@ package cse360Phase3;
 	        btnNS.setStyle(buttonStyle);
 	        btnRP.setStyle(buttonStyle);
 	        btnDR.setStyle(buttonStyle);
-	        
+
+		//adding buttons to hbox
 	        hbox.getChildren().add(btnNP);
 	        hbox.getChildren().add(btnNS);
 	        hbox.getChildren().add(btnRP);
 	        hbox.getChildren().add(btnDR); 
-	        
-	        //---------------------------------------------------------------------
-	        /*
-	         * This part is designated for the New Patient Creation Screen
-	         */
 	        
 	        Random rand = new Random();
 	        
