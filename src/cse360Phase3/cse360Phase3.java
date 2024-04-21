@@ -613,8 +613,7 @@ import javafx.scene.paint.Color;
 	            public void changed(ObservableValue<? extends Toggle> ob,  
 	                                                    Toggle o, Toggle n){ 
 	                RadioButton rb = (RadioButton)tg.getSelectedToggle(); 
-	                if (rb != null) { 
-	                    // change the label 
+	                if (rb != null) {                     
 	                    appointmentD.setText("Patient schedueled for " + rb.getText()); 
 	                } 
 	            } 
