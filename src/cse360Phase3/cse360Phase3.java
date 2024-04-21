@@ -6,7 +6,9 @@ package cse360Phase3;
 
 
 	import javafx.application.Application;
-	import javafx.collections.FXCollections;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 	import javafx.collections.ObservableList;
 
 	import java.io.BufferedReader;
@@ -15,9 +17,18 @@ package cse360Phase3;
 	import java.io.FileReader;
 	import java.io.FileWriter;
 	import java.io.IOException;
-	import java.util.Random;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-	import javafx.application.Application;
+import javafx.application.Application;
 	import javafx.event.ActionEvent;
 	import javafx.event.EventHandler;
 	import javafx.geometry.Pos;
@@ -26,8 +37,11 @@ package cse360Phase3;
 	import javafx.scene.control.Button;
 	import javafx.scene.control.ComboBox;
 	import javafx.scene.control.Label;
-	import javafx.scene.control.TextField;
-	import javafx.scene.paint.Color;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.paint.Color;
 	import javafx.scene.shape.Rectangle;
 	import javafx.stage.Stage;
 	import javafx.scene.layout.*;
@@ -38,7 +52,7 @@ package cse360Phase3;
 	        launch(args);
 	    }
 	    
-	    public void start(Stage primaryStage) {
+	    public void start(Stage primaryStage) throws SQLException {
 	        primaryStage.setTitle("Main Menu");
 	        
 	        
@@ -145,50 +159,9 @@ package cse360Phase3;
 	        
 	        String filename = new String(filenameSB.toString());
 	        //Scene homeScene = new Scene(homeScreen, 800, 300);
-	        
-	        
-	        
 	        btnSave.setOnAction(new EventHandler<>() {
 	            public void handle(ActionEvent event) {
-	            	try {
-	        	      File patientInfo = new File(filename);
-	        	      FileWriter fileWriter = new FileWriter(filename);
-	        	        System.out.println("File created: " + patientInfo.getName());
-	        	        if(fn.getText().equals("")) {
-	        	        	fileWriter.write(" \n");
-	        	        } else {
-	        	        	fileWriter.write(fn.getText() + "\n");
-	        	        }
-	        	        if(ln.getText().equals("")) {
-	        	        	fileWriter.write(" \n");
-	        	        } else {
-	        	        	fileWriter.write(ln.getText() + "\n");
-	        	        }
-	        	        if(em.getText().equals("")) {
-	        	        	fileWriter.write(" \n");
-	        	        } else {
-	        	        	fileWriter.write(em.getText() + "\n");
-	        	        }
-	        	        if(pn.getText().equals("")) {
-	        	        	fileWriter.write(" \n");
-	        	        } else {
-	        	        	fileWriter.write(pn.getText() + "\n");
-	        	        }
-	        	        if(ad.getText().equals("")) {
-	        	        	fileWriter.write(" \n");
-	        	        } else {
-	        	        	fileWriter.write(ad.getText() + "\n");
-	        	        }
-	        	        if(bd.getText().equals("")) {
-	        	        	fileWriter.write(" \n");
-	        	        } else {
-	        	        	fileWriter.write(ad.getText() + "\n");
-	        	        }
-	        	        fileWriter.close(); 
-	        	    } catch (IOException e) {
-	        	      System.out.println("An error occurred.");
-	        	      e.printStackTrace();
-	        	    }
+	            	
 	            }
 	        });
 	        
@@ -210,6 +183,8 @@ package cse360Phase3;
 	        Label phoneN = new Label("Phone Number: ");
 	        Label emai = new Label("Email: ");
 	        Label addr = new Label("Address: ");
+	        Label sms = new Label("SMS: ");
+	        Label sentMessages = new Label("");
 	        Label errorOccurence = new Label("");
 	        
 	        TextField firstNField = new TextField();
@@ -218,15 +193,23 @@ package cse360Phase3;
 	        TextField phoneNField = new TextField();
 	        TextField emaiField = new TextField();
 	        TextField addrField = new TextField();
+	        TextField smsField = new TextField();
+	        
+	        
+	        Button backToHome = new Button("Back");
+	        Button updateInfo = new Button("Update");
+	        Button smsSend = new Button("Send");
+	        
+	        StringBuilder sentString = new StringBuilder("");
 	        
 	        //Formatted into vboxes
 	        VBox textVbox3 = new VBox(7); 
 	        VBox taVbox3 = new VBox(); 
 	        
-	        textVbox3.getChildren().addAll(editProfile, firstN, lastN, birthD, phoneN, emai, addr);
+	        textVbox3.getChildren().addAll(editProfile, firstN, lastN, birthD, phoneN, emai, addr, sms);
 	        
 	        taVbox3.getChildren().add(empty);
-	        taVbox3.getChildren().addAll(firstNField, lastNField, birthDField, phoneNField, emaiField, addrField, errorOccurence);
+	        taVbox3.getChildren().addAll(firstNField, lastNField, birthDField, phoneNField, emaiField, addrField, smsField, updateInfo, smsSend, backToHome, sentMessages, errorOccurence);
 	        
 	        BorderPane pvStack = new BorderPane();
 	        pvStack.setLeft(textVbox3);
@@ -234,6 +217,9 @@ package cse360Phase3;
 	        
 	        
 	        Scene pvScene2 = new Scene(pvStack, 800, 300);
+	        
+	      //Getting and reading from file comes here. When clicking the login button
+	        
 	        
 	        
 	        //---------------------------------------------------------------------
@@ -264,8 +250,64 @@ package cse360Phase3;
 	        htotal.getChildren().addAll(verticalUsage, hboxLogin); 
 	        
 	        
+	        String idGet = pidField2.getText();
 	        
-	        //Getting and reading from file comes here. When clicking the login button
+	        //Deletes old text file and rebuilds it from the ground up with updated info
+	        updateInfo.setOnAction(new EventHandler<>() {
+	            public void handle(ActionEvent event) {
+					StringBuilder filenameSB4 = new StringBuilder("");
+	                filenameSB4.append(pidField2.getText());
+	                filenameSB4.append("_PatientInfo.txt");
+	                String filename4 = filenameSB4.toString();
+	                try {
+						FileWriter fileWriter2 = new FileWriter(filename4);
+						File myObj = new File(filename4);
+						myObj.delete();
+						File patientInfo = new File(filename4);
+						System.out.println("File rebuilt: " + patientInfo.getName());
+	        	        if(firstNField.getText().equals("")) {
+	        	        	fileWriter2.write(" \n");
+	        	        } else {
+	        	        	fileWriter2.write(firstNField.getText() + "\n");
+	        	        }
+	        	        if(lastNField.getText().equals("")) {
+	        	        	fileWriter2.write(" \n");
+	        	        } else {
+	        	        	fileWriter2.write(lastNField.getText() + "\n");
+	        	        }
+	        	        if(birthD.getText().equals("")) {
+	        	        	fileWriter2.write(" \n");
+	        	        } else {
+	        	        	fileWriter2.write(birthD.getText() + "\n");
+	        	        }
+	        	        if(phoneNField.getText().equals("")) {
+	        	        	fileWriter2.write(" \n");
+	        	        } else {
+	        	        	fileWriter2.write(phoneNField.getText() + "\n");
+	        	        }
+	        	        if(emaiField.getText().equals("")) {
+	        	        	fileWriter2.write(" \n");
+	        	        } else {
+	        	        	fileWriter2.write(emaiField.getText() + "\n");
+	        	        }
+	        	        if(addrField.getText().equals("")) {
+	        	        	fileWriter2.write(" \n");
+	        	        } else {
+	        	        	fileWriter2.write(addrField.getText() + "\n");
+	        	        }
+	        	        fileWriter2.close();
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+	                primaryStage.setScene(pvScene2);
+	                
+	            }
+	            
+	        });
+	        
+	      //Getting and reading from file comes here. When clicking the login button
 	        btnLogin.setOnAction(new EventHandler<>() {
 	            public void handle(ActionEvent event) {
 					StringBuilder filenameSB4 = new StringBuilder("");
@@ -284,13 +326,54 @@ package cse360Phase3;
 	            
 	        });
 	        
-	        //THIS part is NURSE - shania
+	        //---------------------------------------------------------------------
+	        
+	        //THIS part is NURSE
 	        ObservableList<String> patientNames = FXCollections.observableArrayList(); //a place to store each patient's name
 	        btnSave.setOnAction(new EventHandler<>() //each time save is clicked on patient intake it is added to the array list so it can be accessed on nurse view
 	        {
 	            public void handle(ActionEvent event) {
 	                String fullName = fn.getText() + " " + ln.getText(); //gets appropriate information
 	                patientNames.add(fullName); //adds it
+	                try {
+		        	      File patientInfo = new File(filename); //When the save button is clicked, it saves all info to a text file labeled with ID
+		        	      FileWriter fileWriter = new FileWriter(filename);
+		        	        System.out.println("File created: " + patientInfo.getName());
+		        	        if(fn.getText().equals("")) {
+		        	        	fileWriter.write(" \n");
+		        	        } else {
+		        	        	fileWriter.write(fn.getText() + "\n");
+		        	        }
+		        	        if(ln.getText().equals("")) {
+		        	        	fileWriter.write(" \n");
+		        	        } else {
+		        	        	fileWriter.write(ln.getText() + "\n");
+		        	        }
+		        	        if(em.getText().equals("")) {
+		        	        	fileWriter.write(" \n");
+		        	        } else {
+		        	        	fileWriter.write(em.getText() + "\n");
+		        	        }
+		        	        if(pn.getText().equals("")) {
+		        	        	fileWriter.write(" \n");
+		        	        } else {
+		        	        	fileWriter.write(pn.getText() + "\n");
+		        	        }
+		        	        if(ad.getText().equals("")) {
+		        	        	fileWriter.write(" \n");
+		        	        } else {
+		        	        	fileWriter.write(ad.getText() + "\n");
+		        	        }
+		        	        if(bd.getText().equals("")) {
+		        	        	fileWriter.write(" \n");
+		        	        } else {
+		        	        	fileWriter.write(ad.getText() + "\n");
+		        	        }
+		        	        fileWriter.close(); 
+		        	    } catch (IOException e) {
+		        	      System.out.println("An error occurred.");
+		        	      e.printStackTrace();
+		        	    }
 	            }
 	        });
 	        ComboBox<String> patientDropdown = new ComboBox<>();//combo box/drop down
@@ -323,6 +406,10 @@ package cse360Phase3;
 	        VBox num2 = new VBox();
 	        num2.getChildren().addAll(patientNamesM, rectangle2);
 	        
+	        StackPane messageStackPane = new StackPane();
+	        Label messagesReceived = new Label("");
+	        messageStackPane.getChildren().addAll(num2, messagesReceived);
+	        
 	        Label patientVisits = new Label("Upcoming visists");
 	        Rectangle rectangle3 = new Rectangle(200, 100); // Width, Height
 	        rectangle3.setFill(null); // No fill color
@@ -342,7 +429,7 @@ package cse360Phase3;
 
 	        HBox hboxPanes = new HBox();
 	        hboxPanes.setSpacing(10);
-	        hboxPanes.getChildren().addAll(stackPane, num2, stackPane2);
+	        hboxPanes.getChildren().addAll(stackPane, messageStackPane, stackPane2);
 	        hboxPanes.setAlignment(Pos.CENTER);
 
 	        
@@ -360,6 +447,34 @@ package cse360Phase3;
 	        nurseLayout.getChildren().addAll(pageNurse, hboxPanes, backN);
 	        
 	        //implement back to home even handling
+	        
+	      //Getting and reading from file comes here. When clicking the login button
+	        smsSend.setOnAction(new EventHandler<>() {
+	            public void handle(ActionEvent event) {
+					StringBuilder filenameSB4 = new StringBuilder("");
+	                filenameSB4.append(pidField2.getText());
+	                filenameSB4.append("_SMS.txt");
+	                String filename4 = filenameSB4.toString();
+		            try {
+		            	FileWriter filewriter = new FileWriter(filename4);
+		            	sentString.append(smsField.getText() + "\n");
+		            	String convertedSentString = sentString.toString();
+		            	sentMessages.setText(convertedSentString); // Attaches messages to both the patient login as well as the nurse view
+		            	messagesReceived.setText(convertedSentString);
+		            	filewriter.write(convertedSentString);
+		            	filewriter.close();
+					} catch (FileNotFoundException e) {
+						errorOccurence.setText("Patient ID not found!");
+						e.printStackTrace();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+	                primaryStage.setScene(pvScene2);
+	                
+	            }
+	            
+	        });
 	        
 	        
 	        
@@ -398,8 +513,9 @@ package cse360Phase3;
 	        rectangle5.setStrokeWidth(2);
 	        
 	        Label medicalHistoryL = new Label("Patient Medical History");
+	        Label previousVisits = new Label("No previous visits found");
 	        StackPane stackPane6 = new StackPane();
-	        stackPane6.getChildren().addAll(rectangle5, medicalHistoryL); 
+	        stackPane6.getChildren().addAll(rectangle5, medicalHistoryL, previousVisits); 
 	        
 	        stackPane6.setAlignment(medicalHistoryL, Pos.TOP_CENTER);
 
@@ -409,8 +525,9 @@ package cse360Phase3;
 	        rectangle6.setStrokeWidth(2);
 	        
 	        Label patientFindingsL = new Label("Patient Findings");
+	        Label previousFindings = new Label("No previous findings found");
 	        StackPane stackPane7 = new StackPane();
-	        stackPane7.getChildren().addAll(rectangle6, patientFindingsL); 
+	        stackPane7.getChildren().addAll(rectangle6, patientFindingsL, previousFindings); 
 	        
 	        stackPane7.setAlignment(patientFindingsL, Pos.TOP_CENTER);
 
@@ -419,9 +536,10 @@ package cse360Phase3;
 	        rectangle7.setStroke(Color.BLACK); // Outline color
 	        rectangle7.setStrokeWidth(2);
 	        
-	        Label prescribeMedicineL = new Label("PrescribeMedicine");
+	        Label prescribeMedicineL = new Label("Prescribe Medicine");
+	        Label medicationList = new Label("Medication List");
 	        StackPane stackPane8 = new StackPane();
-	        stackPane8.getChildren().addAll(rectangle7, prescribeMedicineL); 
+	        stackPane8.getChildren().addAll(rectangle7, prescribeMedicineL, medicationList); 
 	        
 	        stackPane8.setAlignment(prescribeMedicineL, Pos.TOP_CENTER);
 
@@ -448,14 +566,87 @@ package cse360Phase3;
 	                primaryStage.setScene(doctorScene);
 	            }
 	        });
-
-
 	        
+	        Label medHistory = new Label("Medical History:");
+	        Label patFindings = new Label("Patient Findings");
+	        Label medList = new Label("Patient's Medications");
+	        Button patientUpdater = new Button("Update");
+	        Button backFromUpdater = new Button("Back");
 	        
+	        TextField medHistoryText = new TextField();
+	        TextField patFindingsText = new TextField();
+	        TextField medListText = new TextField();
 	        
+	        BorderPane root1 = new BorderPane();
+	        VBox updaterVbox = new VBox();
+	        updaterVbox.getChildren().addAll(medHistory, medHistoryText, patFindings, patFindingsText, medList, medListText, patientUpdater, backFromUpdater);
 	        
+	        VBox schedulerVbox = new VBox();
 	        
+	        Label titleScheduler = new Label("Click to schedule");
+	        Button scheduleBtnBack = new Button("Back");
 	        
+	        ToggleGroup tg = new ToggleGroup(); 
+	        
+	        // create radiobuttons 
+	        RadioButton r1 = new RadioButton("1:00"); 
+	        RadioButton r2 = new RadioButton("2:00"); 
+	        RadioButton r3 = new RadioButton("3:00"); 
+	        RadioButton r4 = new RadioButton("4:00"); 
+	        
+	        r1.setToggleGroup(tg); 
+	        r2.setToggleGroup(tg); 
+	        r3.setToggleGroup(tg); 
+	        r4.setToggleGroup(tg);
+	        
+	        schedulerVbox.getChildren().addAll(titleScheduler, r1, r2, r3, r4, scheduleBtnBack);
+	        
+	        Scene schedulingView = new Scene(schedulerVbox, 800, 300);
+	        
+	        scheduleApp.setOnAction(new EventHandler<>() {
+	            public void handle(ActionEvent event) {
+	                primaryStage.setScene(schedulingView);
+	            }
+	        });
+	        
+	        tg.selectedToggleProperty().addListener((ChangeListener<? super Toggle>) new ChangeListener<Toggle>()  { 
+	            public void changed(ObservableValue<? extends Toggle> ob,  
+	                                                    Toggle o, Toggle n){ 
+	                RadioButton rb = (RadioButton)tg.getSelectedToggle(); 
+	                if (rb != null) { 
+	                    // change the label 
+	                    appointmentD.setText("Patient schedueled for " + rb.getText()); 
+	                } 
+	            } 
+	        }); 
+	        
+	        scheduleBtnBack.setOnAction(new EventHandler<>() {
+	            public void handle(ActionEvent event) {
+	                primaryStage.setScene(doctorScene);
+	            }
+	        });
+	        
+	        Scene manageScene = new Scene(updaterVbox, 800, 300);
+	        
+	        manageApp.setOnAction(new EventHandler<>() {
+	            public void handle(ActionEvent event) {
+	                primaryStage.setScene(manageScene);
+	            }
+	        });
+	        
+	        backFromUpdater.setOnAction(new EventHandler<>() {
+	            public void handle(ActionEvent event) {
+	                primaryStage.setScene(doctorScene);
+	            }
+	        });
+	        
+	        patientUpdater.setOnAction(new EventHandler<>() {
+	            public void handle(ActionEvent event) {
+	                previousVisits.setText(medHistoryText.getText());
+	                previousFindings.setText(patFindingsText.getText());
+	                medicationList.setText(medListText.getText());
+	            }
+	        });
 	        
 	        //Formatting the app
 	        //BorderPane homeScreen = new BorderPane(hbox, homeTitle, empty1, empty2, empty3);
@@ -506,6 +697,13 @@ package cse360Phase3;
 	            }
 	        });
 	        
+	        backToHome.setOnAction(new EventHandler<>() {
+	            public void handle(ActionEvent event) {
+	                primaryStage.setScene(homeScene);
+	            }
+	            
+	        });
+	        
 	        backD.setOnAction(new EventHandler<>() 
 	        {
 	            public void handle(ActionEvent event) 
@@ -522,5 +720,9 @@ package cse360Phase3;
 	       
 	        primaryStage.show();
 	    }
-	}
+	    
+	    
+	    
+	   
+}
 
